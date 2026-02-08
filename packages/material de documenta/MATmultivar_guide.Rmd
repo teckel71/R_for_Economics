@@ -1,0 +1,161 @@
+---
+title: "Guía de Usuario del Paquete MATmultivar"
+author: "Miguel Ángel Tarancón"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+# Introducción
+
+El paquete `MATmultivar` proporciona herramientas para el análisis multivariante en R, facilitando la generación de análisis de correlación, componentes principales y clustering jerárquico. Es útil para investigadores, analistas de datos y estudiantes que buscan realizar análisis avanzados de datos métricos.
+
+# Instalación
+
+Para instalar `MATmultivar` desde GitHub, usa:
+
+```r
+# Instalar devtools si no está instalado
+if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
+
+# Instalar MATmultivar desde GitHub
+devtools::install_github("usuario/MATmultivar")
+
+# Cargar el paquete
+library(MATmultivar)
+```
+
+# Funciones de MATmultivar
+
+## 1. MATcor: Matriz de Correlación Gráfica
+
+### Uso
+
+```r
+MATcor(data, ...)
+```
+
+### Objetivo
+
+Genera una matriz de correlación gráfica entre variables métricas.
+
+### Argumentos
+
+- `data`: Dataframe con los datos.
+- `...`: Variables específicas (sin comillas) a incluir.
+
+### Salida
+
+Un gráfico de correlación almacenado en el entorno global.
+
+### Ejemplo
+
+```r
+MATcor(mtcars, mpg, hp, wt)
+```
+
+---
+
+## 2. MATpca: Análisis de Componentes Principales
+
+### Uso
+
+```r
+MATpca(data, ...)
+```
+
+### Objetivo
+
+Realiza un Análisis de Componentes Principales (PCA) y genera gráficos de autovalores y varianza acumulada.
+
+### Argumentos
+
+- `data`: Dataframe con los datos.
+- `...`: Variables específicas (sin comillas) a incluir.
+
+### Salida
+
+Lista con:
+- Tablas resumen
+- Cargas factoriales
+- Gráficos de autovalores y varianza acumulada
+
+### Ejemplo
+
+```r
+resultado <- MATpca(mtcars, mpg, hp, wt)
+resultado$info$graficos
+```
+
+---
+
+## 3. MATpcascores: Puntuaciones de Componentes Principales
+
+### Uso
+
+```r
+MATpcascores(data, pca_object, num_comp, num_cases = 0)
+```
+
+### Objetivo
+
+Extrae y muestra puntuaciones de componentes principales de un PCA previamente realizado.
+
+### Argumentos
+
+- `data`: Dataframe original.
+- `pca_object`: Objeto PCA de `prcomp()`.
+- `num_comp`: Número de componentes a extraer.
+- `num_cases`: Número de casos a mostrar (opcional).
+
+### Salida
+
+Lista con:
+- Dataframe de puntuaciones.
+- Tabla formateada con las puntuaciones.
+
+### Ejemplo
+
+```r
+pca_result <- prcomp(mtcars[, c("mpg", "hp", "wt")], scale = TRUE)
+MATpcascores(mtcars, pca_result, num_comp = 2)
+```
+
+---
+
+## 4. MATclus_Ward: Clustering Jerárquico con Método de Ward
+
+### Uso
+
+```r
+MATclus_Ward(data, ..., k = 0, silueta = FALSE)
+```
+
+### Objetivo
+
+Realiza un análisis de clustering jerárquico utilizando el método de Ward.
+
+### Argumentos
+
+- `data`: Dataframe con los datos.
+- `...`: Variables específicas a incluir.
+- `k`: Número de clusters a formar (opcional).
+- `silueta`: Si `TRUE`, calcula el número óptimo de clusters.
+
+### Salida
+
+Lista con:
+- Dendrograma
+- Resumen de grupos
+- Gráficos de agrupación
+
+### Ejemplo
+
+```r
+MATclus_Ward(mtcars, mpg, hp, wt, k = 3)
+```
+
+---
+
+# Conclusión
+
+El paquete `MATmultivar` permite realizar análisis multivariantes de manera sencilla y eficiente en R. Prueba sus funciones y optimiza tu análisis de datos.

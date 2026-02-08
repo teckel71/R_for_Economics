@@ -1,0 +1,476 @@
+---
+title: "MATdatatools Guide"
+author: "Miguel-Ángel Tarancón"
+date: "`r Sys.Date()`"
+output:
+  word_document:
+    toc: true
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introducción
+
+El paquete **MATdatatools** ha sido diseñado para facilitar el análisis de datos y la generación de resultados gráficos y estadísticos en R. Este paquete es una herramienta ágil y accesible, especialmente útil para estudiantes y profesionales de Administración y Dirección de Empresas que buscan una manera intuitiva de explorar, analizar y visualizar sus datos sin necesidad de profundos conocimientos de programación.
+
+**¿Qué ofrece MATdatatools?**
+
+-   Automatización de procesos estadísticos comunes.
+-   Gráficos de alta calidad con interpretaciones claras.
+-   Análisis descriptivos, exploración de correlaciones y más.
+
+# Funciones de MATdatatools
+
+El paquete incluye las siguientes funciones principales:
+
+-   **MATfexcel:** Importa datos desde hojas de Excel, convirtiendo fácilmente las primeras columnas en nombres de filas.
+-   **MATmv:** Filtra datos con casos completos, muestra gráficamente los datos faltantes y genera un resumen.
+-   **MATout:** Detecta y elimina valores atípicos en una variable, proporcionando gráficos y tablas explicativas.
+-   **MATout_Mahalanobis:** Identifica valores atípicos multidimensionales basándose en la distancia de Mahalanobis.
+-   **MATdescribe:** Realiza un análisis descriptivo completo, incluyendo gráficos y estadísticos.
+-   **MATtaf:** Genera tablas de frecuencias agrupadas en intervalos y crea histogramas relacionados.
+-   **MATcor:** Produce una matriz de correlación gráfica entre variables.
+
+Cada función está diseñada para ser intuitiva y generar resultados listos para interpretar. El archivo de Microsoft(R) Excel(R) de los ejemplos, eolica_100_mv.xls, puede descargarse [aquí](https://docs.google.com/spreadsheets/d/1f9KV5epNpBRM6v9sKPtgFDkzMlOo75Y2/edit?usp=sharing&ouid=115375878280465826079&rtpof=true&sd=true).
+
+# Descarga e Instalación
+
+## Desde GitHub
+
+1.  Asegúrate de tener instalado el paquete `devtools`:
+
+    ``` r
+    install.packages("devtools")
+    ```
+
+2.  Descarga e instala el paquete desde GitHub:
+
+    ``` r
+    devtools::install_github("teckel71/R_for_Economics/packages/MATdatatools")
+    ```
+
+3.  Carga el paquete:
+
+    ``` r
+    library(MATdatatools)
+    ```
+
+## En RStudio
+
+1.  Abre RStudio y ve a **Tools \> Install Packages**.
+
+2.  Selecciona **Install from GitHub** y escribe:
+
+    ```         
+    teckel71/R_for_Economics/packages/MATdatatools
+    ```
+
+3.  Haz clic en **Install**.
+
+# Detalle de Cada Función
+
+## MATfexcel
+
+### Uso:
+
+``` r
+MATfexcel(file_path, sheet_name, na_values = NULL)
+```
+
+### Objetivo
+
+Importar datos desde hojas de Excel y convertir la primera columna en nombres de filas.
+
+### Parámetros
+
+-   `file_path`: Ruta del archivo de Excel.
+-   `sheet_name`: Nombre de la hoja a importar.
+-   `na_values`: Valores que deben ser considerados como NA (opcional).
+
+### Resultados Esperados
+
+Un dataframe con las filas correctamente nombradas.
+
+### Ejemplo
+
+```{r, eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
+rm(list = ls())
+library(MATdatatools)
+
+eolica_100 <- MATfexcel("eolica_100_mv.xlsx", "Datos",
+                        na_values = c("n.d.", "s.d."))
+```
+
+### Resultados Esperados
+
+1.  Un dataframe llamado `eolica_100`
+
+```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+rm(list = ls())
+library(MATdatatools)
+eolica_100 <- readxl::read_excel("eolica_100_mv.xlsx", "Datos",
+                        na = c("n.d.", "s.d."))
+eolica_100 <- data.frame(eolica_100, row.names = 1)
+library(dplyr)
+df <- select(eolica_100, everything())
+
+# Número de variables por bloque
+variables_por_bloque <- 3
+
+# Dividir las variables en bloques
+for (i in seq(1, ncol(df), variables_por_bloque)) {
+  # Comentario: No mostramos el nombre del bloque
+  print(summary(df[, i:min(i + variables_por_bloque - 1, ncol(df))]))
+  cat("\n")
+}
+rm (i)
+rm (variables_por_bloque)
+rm (df)
+```
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+readxl::read_excel("eolica_100_mv.xlsx", "Datos",
+                        na = c("n.d.", "s.d."))
+```
+
+## MATmv
+
+### Uso:
+
+``` r
+MATmv(dataframe, columnas)
+```
+
+### Objetivo
+
+Filtrar casos completos de un dataframe y mostrar los valores faltantes de manera gráfica.
+
+### Parámetros
+
+-   `dataframe`: El dataframe que se desea analizar.
+-   `columnas`: Las columnas (variables) que se desean evaluar (sin comillas).
+
+### Resultados
+
+-   Un nuevo dataframe con los casos completos de las columnas seleccionadas.
+-   Gráfico de valores faltantes.
+
+### Ejemplo
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+MATmv(eolica_100, c(RENECO, ACTIVO, RES, RENFIN, FPIOS, MARGEN))
+```
+
+### Resultados Esperados
+
+1.  Un dataframe llamado `eolica_100_sm` con los casos completos en las variables seleccionadas.
+2.  Una lista `eolica_100_sm_info` que contiene:
+    -   Gráfico que visualiza los valores faltantes.
+    -   Tabla con los casos faltantes.
+
+**Visualización de Resultados:**
+
+```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+eolica_100_sm_info$grafico_vis_miss
+#eolica_100_sm_info$tabla_na
+library(dplyr)
+df <- select(eolica_100_sm, everything())
+
+# Número de variables por bloque
+variables_por_bloque <- 3
+
+# Dividir las variables en bloques
+for (i in seq(1, ncol(df), variables_por_bloque)) {
+  # Comentario: No mostramos el nombre del bloque
+  print(summary(df[, i:min(i + variables_por_bloque - 1, ncol(df))]))
+  cat("\n")
+}
+rm (i)
+rm (variables_por_bloque)
+rm (df)
+
+```
+
+``` r
+eolica_100_sm_info$grafico_vis_miss
+eolica_100_sm_info$tabla_na
+```
+
+## MATout
+
+### Uso:
+
+``` r
+MATout(data, variable)
+```
+
+### Objetivo
+
+Detectar valores atípicos unidimensionales basados en el rango intercuartílico (IQR).
+
+### Parámetros
+
+-   `data`: El dataframe que contiene los datos.
+-   `variable`: La variable numérica a analizar (sin comillas).
+
+### Resultados
+
+-   Identifica valores atípicos y los muestra en un boxplot.
+-   Filtra los datos sin valores atípicos.
+
+### Ejemplo
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+MATout(data = eolica_100_sm, variable = RENECO)
+
+```
+
+### Resultados Esperados
+
+1.  Un dataframe llamado `eolica_100_sm_so` con los datos filtrados.
+2.  Una lista `eolica_100_sm_so_info` que contiene:
+    -   Box-Plot de la variable analizada.
+    -   Tabla de valores atípicos.
+
+**Visualización de Resultados:**
+
+```{r, eval=TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+eolica_100_sm_so_info$Boxplot
+#eolica_100_sm_so_info$Outliers_Table
+library(dplyr)
+df <- select(eolica_100_sm_so, everything())
+
+# Número de variables por bloque
+variables_por_bloque <- 3
+
+# Dividir las variables en bloques
+for (i in seq(1, ncol(df), variables_por_bloque)) {
+  # Comentario: No mostramos el nombre del bloque
+  print(summary(df[, i:min(i + variables_por_bloque - 1, ncol(df))]))
+  cat("\n")
+}
+rm (i)
+rm (variables_por_bloque)
+rm (df)
+
+```
+
+``` r
+eolica_100_sm_so_info$Boxplot
+eolica_100_sm_so_info$Outliers_Table
+```
+
+## MATout_Mahalanobis
+
+### Uso:
+
+``` r
+MATout_Mahalanobis(data, variables)
+```
+
+### Objetivo
+
+Detectar valores atípicos multidimensionales usando la distancia de Mahalanobis.
+
+### Parámetros
+
+-   `data`: El dataframe que contiene los datos.
+-   `variables`: Las variables numéricas para analizar (sin comillas).
+
+### Resultados
+
+-   Identifica valores atípicos multidimensionales.
+-   Filtra los datos sin valores atípicos.
+
+### Ejemplo
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+MATout_Mahalanobis(data = eolica_100_sm,
+                   variables = c(RENECO, ACTIVO, RES, RENFIN, FPIOS, MARGEN))
+```
+
+### Resultados Esperados
+
+1.  Un dataframe llamado `eolica_100_sm_so` con los datos filtrados.
+2.  Una lista `eolica_100_sm_so_info` que contiene:
+    -   Tabla de valores atípicos.
+    -   Gráficos de las distancias de Mahalanobis.
+
+**Visualización de Resultados:**
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+eolica_100_sm_so_info$Boxplot
+#eolica_100_sm_so_info$Outliers_Table
+library(dplyr)
+df <- select(eolica_100_sm_so, everything())
+
+# Número de variables por bloque
+variables_por_bloque <- 3
+
+# Dividir las variables en bloques
+for (i in seq(1, ncol(df), variables_por_bloque)) {
+  # Comentario: No mostramos el nombre del bloque
+  print(summary(df[, i:min(i + variables_por_bloque - 1, ncol(df))]))
+  cat("\n")
+}
+rm (i)
+rm (variables_por_bloque)
+rm (df)
+```
+
+``` r
+eolica_100_sm_so_info$Boxplot
+eolica_100_sm_so_info$Outliers_Table
+```
+
+## MATdescribe
+
+### Uso:
+
+``` r
+MATdescribe(data, variable)
+```
+
+### Objetivo
+
+Realizar un análisis descriptivo completo de una variable numérica.
+
+### Parámetros
+
+-   `data`: El dataframe que contiene los datos.
+-   `variable`: La variable numérica a analizar (sin comillas).
+
+### Resultados
+
+-   Gráficos como histogramas, QQ-plots y boxplots.
+-   Estadísticos clave como media, desviación típica, y prueba de normalidad.
+
+### Ejemplo
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+MATdescribe(eolica_100_sm_so, RENECO)
+```
+
+### Resultados Esperados
+
+1.  Una lista llamada `RENECO_describe_info` que contiene:
+    -   Gráfico resumen con varios paneles.
+    -   Tabla de estadísticos descriptivos.
+    -   Resultado de la prueba de normalidad de Shapiro-Wilk (para significación de 0.05).
+
+**Visualización de Resultados:**
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+RENECO_describe_info$grafico_resumen
+#RENECO_describe_info$estadisticos
+#RENECO_describe_info$normalidad
+```
+
+``` r
+RENECO_describe_info$grafico_resumen
+RENECO_describe_info$estadisticos
+RENECO_describe_info$normalidad
+```
+
+## MATtaf
+
+### Uso:
+
+``` r
+MATtaf(data, variable, breaks = NULL)
+```
+
+### Objetivo
+
+Generar una tabla de frecuencias agrupadas en intervalos y un histograma relacionado.
+
+### Parámetros
+
+-   `data`: El dataframe que contiene los datos.
+-   `variable`: La variable numérica para analizar (sin comillas).
+-   `breaks`: Número de intervalos (opcional).
+
+### Resultados
+
+-   Una tabla de frecuencias.
+-   Un histograma con los mismos intervalos.
+
+### Ejemplo
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+MATtaf(eolica_100_sm_so, RENECO)
+```
+
+### Resultados Esperados
+
+1.  Una lista llamada `RENECO_intervalos_frecuencia` que contiene:
+    -   Histograma con los mismos intervalos que la tabla de frecuencias.
+    -   Tabla de frecuencias agrupadas en intervalos.
+
+**Visualización de Resultados:**
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+RENECO_intervalos_frecuencia$histograma
+#RENECO_intervalos_frecuencia$tabla
+```
+
+``` r
+RENECO_intervalos_frecuencia$histograma
+RENECO_intervalos_frecuencia$tabla
+```
+
+## MATcor
+
+### Uso:
+
+``` r
+MATcor(data, ...)
+```
+
+### Objetivo
+
+Crear una matriz de correlación gráfica.
+
+### Parámetros
+
+-   `data`: El dataframe que contiene los datos.
+-   `...`: Variables específicas (sin comillas) para incluir en el análisis. Si no se especifican, se usan todas las variables numéricas del dataframe.
+
+### Resultados
+
+-   Una matriz de correlación gráfica generada con GGally.
+
+### Ejemplo
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+MATcor(eolica_100_sm_so, RENECO, RENFIN, ACTIVO, FPIOS)
+```
+
+### Resultados Esperados
+
+1.  Una lista llamada `eolica_100_sm_so_correlaciones_info` que contiene:
+    -   Gráfico de correlación.
+
+**Visualización de Resultados:**
+
+```{r, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+eolica_100_sm_so_correlaciones_info$correlaciones
+```
+
+``` r
+eolica_100_sm_so_correlaciones_info$correlaciones
+```
+
+# Documentación del Paquete
+
+-   **Autor:** Miguel Ángel Tarancón miguelangel.tarancon\@uclm.es\
+-   **Versión:** 0.1.0\
+-   **Fecha:** `r Sys.Date()`\
+-   **Licencia:** GPL-3
+
+# ¡Empieza a explorar tus datos con MATdatatools!
+
+Este paquete está diseñado para facilitarte el trabajo y ayudarte a generar análisis rápidos y visuales. ¡Pruébalo hoy y optimiza tus estudios de datos!

@@ -9,24 +9,38 @@ MATmv(dataframe, ...)
 \arguments{
 \item{dataframe}{Un dataframe que contiene las variables.}
 
-\item{...}{Variables a seleccionar. Pueden ingresarse directamente sin comillas ni vector.}
+\item{...}{Variables a seleccionar. Pueden ingresarse directamente sin comillas (ej. mpg, hp, wt).}
 }
 \value{
-El nombre del nuevo dataframe con los casos completos.
+El nombre (character) del nuevo dataframe con los casos completos: "\if{html}{\out{<dataframe>}}_sm".
 }
 \description{
 Esta función selecciona variables de un dataframe, identifica casos completos y crea un resumen
 con información sobre los datos faltantes. Si no se especifican variables, se utilizan todas las columnas.
 }
 \details{
-La función genera un nuevo dataframe con los casos completos de las columnas seleccionadas
-y una lista de información en el entorno global. La lista contiene una tabla con los datos faltantes
-y un gráfico que visualiza los valores faltantes.
+La función genera:
+\enumerate{
+\item Un nuevo dataframe con casos completos (según las columnas seleccionadas) en el entorno global:
+\itemize{
+\item "\if{html}{\out{<dataframe>}}_sm"
+}
+\item Una lista de información también en el entorno global:
+\itemize{
+\item "\if{html}{\out{<dataframe>}}_sm_info"
+Contiene:
+\itemize{
+\item tabla_na: tabla HTML con los casos con NA (o NULL si no hay)
+\item grafico_vis_miss: gráfico de visdat::vis_miss para las columnas seleccionadas
+}
+}
+}
 }
 \examples{
 # Usar todas las variables del dataframe:
 MATmv(mtcars)
 
-# Usar varias variables sin comillas ni vector:
+# Usar varias variables sin comillas:
 MATmv(mtcars, mpg, hp, wt)
+
 }

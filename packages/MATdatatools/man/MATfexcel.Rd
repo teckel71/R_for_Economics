@@ -11,29 +11,29 @@ MATfexcel(file_path, sheet_name, na_values = NULL, viz = FALSE)
 
 \item{sheet_name}{Nombre o índice de la hoja de Excel a importar.}
 
-\item{na_values}{Un vector de caracteres que representa valores que deben tratarse como \code{NA}. Por defecto, las celdas vacías se consideran \code{NA}.}
+\item{na_values}{Vector de caracteres que representan valores que deben tratarse como \code{NA}.
+Por defecto, las celdas vacías se consideran \code{NA}.}
 
-\item{viz}{Lógico. Si es TRUE, se genera una visualización de las variables. Por defecto es FALSE.}
+\item{viz}{Lógico. Si es TRUE, se genera una visualización de las variables. Por defecto FALSE.}
 }
 \value{
-Un dataframe con los datos importados.
+Un dataframe con los datos importados (primera columna convertida a rownames).
 }
 \description{
 Esta función importa datos desde una hoja de cálculo Excel, convierte la primera columna
-en nombres de fila, y muestra un resumen de las variables. Además, si el argumento \code{viz} es TRUE,
-se genera una visualización de las variables usando \code{gt_plt_summary()} del paquete \code{gtExtras},
-la cual se guardará en el entorno global con el mismo nombre del dataframe resultante, pero con el sufijo "_viz".
+en nombres de fila, y muestra un resumen de las variables. Además, si \code{viz = TRUE},
+genera una visualización con \code{gtExtras::gt_plt_summary()} y la guarda en el entorno global.
+}
+\details{
+Si la llamada se realiza como \code{obj <- MATfexcel(...)}, la visualización se guarda como \code{obj_viz}.
+Si no se detecta el nombre del objeto de salida, se guarda como \code{MATfexcel_viz}.
 }
 \examples{
 \dontrun{
-# Importar datos con celdas vacías como NA
 ola <- MATfexcel("datos.xlsx", "Datos")
-
-# Importar datos con valores adicionales considerados como NA
 ola <- MATfexcel("datos.xlsx", "Datos", na_values = c("n.d.", "s.d."))
-
-# Importar datos y visualizar variables
 ola <- MATfexcel("datos.xlsx", "Datos", viz = TRUE)
-# La visualización estará en "ola_viz"
+# Visualización en ola_viz (si se detecta el nombre)
 }
+
 }

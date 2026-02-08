@@ -9,13 +9,13 @@ MATtaf(data, variable, breaks = NULL)
 \arguments{
 \item{data}{Dataframe que contiene los datos.}
 
-\item{variable}{Variable numérica para la que se calculará la distribución de frecuencias (sin comillas).}
+\item{variable}{Variable numérica para la que se calculará la distribución de frecuencias.}
 
 \item{breaks}{(Opcional) Número de intervalos deseados. Si no se especifica, se calcula automáticamente con Freedman-Diaconis.}
 }
 \value{
 Una lista con la tabla de frecuencias y un histograma, guardada en el entorno global
-con el nombre "\if{html}{\out{<variable>}}_intervalos_frecuencia". Invisiblemente devuelve ese nombre.
+con el nombre "\if{html}{\out{<variable>}}_intervalos_frecuencia".
 }
 \description{
 Esta función crea una tabla con la distribución de frecuencias agrupadas en intervalos
@@ -25,8 +25,7 @@ cuyos intervalos coinciden con los de la tabla.
 }
 \examples{
 \dontrun{
+# Crear una tabla de frecuencias para la variable mpg en mtcars
 MATtaf(data = mtcars, variable = mpg)
-# Resultados: mpg_intervalos_frecuencia en el entorno global
 }
-
 }

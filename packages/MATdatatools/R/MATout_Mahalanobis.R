@@ -1,10 +1,10 @@
 #' Identificación de Outliers Multivariados mediante la Distancia de Mahalanobis
 #'
 #' Esta función identifica outliers multivariados utilizando la distancia de Mahalanobis.
-#' Genera un dataframe sin los outliers y proporciona un gráfico de caja y una tabla con los casos detectados como outliers.
+#' Genera un dataframe sin los outliers y proporciona un gráfico de caja y una tabla con los casos detectados.
 #'
 #' @param data Dataframe que contiene los datos a analizar.
-#' @param ... Variables a incluir en el análisis (sin comillas, separadas por comas). Si no se especifican, se procesarán todas las variables numéricas del dataframe.
+#' @param ... Variables a incluir en el análisis (sin comillas, separadas por comas).
 #'
 #' @return
 #' La función crea dos objetos en el entorno global:
@@ -19,102 +19,115 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Crear un dataframe de ejemplo
-#' datos <- data.frame(x = rnorm(100), y = rnorm(100), z = rnorm(100))
-#'
-#' # Detectar outliers multivariados considerando todas las variables numéricas
-#' MATout_Mahalanobis(datos)
-#'
-#' # Detectar outliers multivariados considerando solo x e y
+#' datos <- data.frame(x = rnorm(100), y = rnorm(100))
 #' MATout_Mahalanobis(datos, x, y)
+#' # Resultados: datos_so y datos_so_info en el entorno global
 #' }
 #'
-#' @import dplyr ggplot2 knitr kableExtra
 #' @export
 MATout_Mahalanobis <- function(data, ...) {
-  # Verificar si los paquetes necesarios están instalados y cargarlos
-  if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
-  if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
-  if (!requireNamespace("knitr", quietly = TRUE)) install.packages("knitr")
-  if (!requireNamespace("kableExtra", quietly = TRUE)) install.packages("kableExtra")
 
-  library(dplyr)
-  library(ggplot2)
-  library(knitr)
-  library(kableExtra)
-
-  # Obtener las variables
-  variables <- sapply(substitute(list(...))[-1], deparse)
-  
-  # Si no se especifican variables, usar todas las numéricas
-  if (length(variables) == 0) {
-    variables <- names(select(data, where(is.numeric)))
+  # Validaciones básicas
+  if (!is.data.frame(data)) {
+    stop("El primer argumento (`data`) debe ser un dataframe.")
   }
-  
-  # Obtener el nombre del dataframe de entrada
+
+  # Capturar variables desde ...
+  variables <- as.character(substitute(list(...)))[-1]
+  if (length(variables) == 0) {
+    stop("Debes indicar al menos una variable, por ejemplo: MATout_Mahalanobis(df, x, y).")
+  }
+
   original_name <- deparse(substitute(data))
 
-  # Comprobar que las variables existen en el dataframe
+  # Verificar que las variables existen
   if (!all(variables %in% colnames(data))) {
-    stop("Algunas de las variables seleccionadas no existen en el dataframe.")
+    faltan <- setdiff(variables, colnames(data))
+    stop(
+      paste0(
+        "Algunas variables no existen en el dataframe: ",
+        paste(faltan, collapse = ", ")
+      )
+    )
   }
 
-  # Verificar si hay valores NA en las variables seleccionadas
+  # Verificar que no hay NA en las variables seleccionadas
   if (any(is.na(data[variables]))) {
     stop("El análisis no se puede realizar porque existen valores NA en las variables seleccionadas.")
   }
 
-  # Calcular la distancia de Mahalanobis
-  cov_matrix <- cov(data[variables])
-  if (det(cov_matrix) == 0) stop("La matriz de covarianza es singular. No se puede calcular la distancia de Mahalanobis.")
-  mahal_dist <- mahalanobis(data[variables], colMeans(data[variables]), cov_matrix)
-  data <- data %>% mutate(Mahalanobis_Distance = mahal_dist)
+  # Calcular matriz de covarianza y comprobar singularidad
+  cov_matrix <- stats::cov(data[variables])
+  if (det(cov_matrix) == 0) {
+    stop("La matriz de covarianza es singular. No se puede calcular la distancia de Mahalanobis.")
+  }
 
-  # Calcular Q1, Q3 e IQR de la distancia de Mahalanobis
-  Q1 <- quantile(data$Mahalanobis_Distance, 0.25)
-  Q3 <- quantile(data$Mahalanobis_Distance, 0.75)
+  # Distancias de Mahalanobis
+  mahal_dist <- stats::mahalanobis(
+    x = data[variables],
+    center = colMeans(data[variables]),
+    cov = cov_matrix
+  )
+
+  # Añadir distancia a una copia temporal
+  data2 <- dplyr::mutate(data, Mahalanobis_Distance = mahal_dist)
+
+  # Criterio IQR sobre la distancia (manteniendo tu enfoque original)
+  Q1 <- stats::quantile(data2$Mahalanobis_Distance, 0.25)
+  Q3 <- stats::quantile(data2$Mahalanobis_Distance, 0.75)
   IQR_value <- Q3 - Q1
+
   lower_bound <- Q1 - 1.5 * IQR_value
   upper_bound <- Q3 + 1.5 * IQR_value
 
-  # Filtrar outliers
-  outliers <- data %>%
-    filter(Mahalanobis_Distance < lower_bound | Mahalanobis_Distance > upper_bound)
+  # Outliers
+  outliers <- dplyr::filter(
+    data2,
+    Mahalanobis_Distance < lower_bound | Mahalanobis_Distance > upper_bound
+  )
 
-  # Filtrar datos sin outliers (con todas las variables originales)
-  data_clean <- data %>%
-    filter(Mahalanobis_Distance >= lower_bound & Mahalanobis_Distance <= upper_bound) %>%
-    select(-Mahalanobis_Distance)  # Eliminar la columna de Mahalanobis
+  # Datos sin outliers (con todas las variables originales; eliminando la columna temporal)
+  data_clean <- dplyr::filter(
+    data2,
+    Mahalanobis_Distance >= lower_bound & Mahalanobis_Distance <= upper_bound
+  ) |>
+    dplyr::select(-Mahalanobis_Distance)
 
-  # Crear nombres para el nuevo dataframe y lista
+  # Nombres de salida en el entorno global (como en tu guía)
   new_data_name <- paste0(original_name, "_so")
   info_list_name <- paste0(new_data_name, "_info")
 
-  # Generar gráfico de caja
+  # Boxplot de distancias
   selected_vars <- paste(variables, collapse = ", ")
-  boxplot <- ggplot(data, aes(y = Mahalanobis_Distance)) +
-    geom_boxplot(fill = "orange") +
-    ggtitle(paste0("Box-Plot de la distancia de Mahalanobis de las variables: ", selected_vars),
-            subtitle = "Generado con la función MATout_Mahalanobis") +
-    ylab("Distancia de Mahalanobis")
+  boxplot <- ggplot2::ggplot(data2, ggplot2::aes(y = Mahalanobis_Distance)) +
+    ggplot2::geom_boxplot(fill = "orange") +
+    ggplot2::ggtitle(
+      paste0("Box-Plot de la distancia de Mahalanobis: ", selected_vars),
+      subtitle = "Generado con la función MATout_Mahalanobis"
+    ) +
+    ggplot2::ylab("Distancia de Mahalanobis")
 
-  # Crear tabla con los outliers
+  # Tabla HTML de outliers
   if (nrow(outliers) > 0) {
-    outliers_table <- outliers %>%
-      select(c("Mahalanobis_Distance", all_of(variables))) %>%
-      kable(format = "html", caption = "Casos considerados outliers") %>%
-      kable_styling(bootstrap_options = "striped", full_width = F)
+    outliers_table <- outliers |>
+      dplyr::select(dplyr::all_of(c("Mahalanobis_Distance", variables))) |>
+      knitr::kable(format = "html", caption = "Casos considerados outliers") |>
+      kableExtra::kable_styling(bootstrap_options = "striped", full_width = FALSE)
   } else {
     outliers_table <- "No se identificaron outliers."
   }
 
-  # Guardar el nuevo dataframe y la lista en el Global Environment
+  # Guardar en .GlobalEnv
   assign(new_data_name, data_clean, envir = .GlobalEnv)
   assign(info_list_name, list(Outliers_Table = outliers_table, Boxplot = boxplot), envir = .GlobalEnv)
 
-   # Eliminar objetos temporales para mantener limpio el entorno global
-  rm(list = ls()[!ls() %in% c(new_data_name, info_list_name)], envir = .GlobalEnv)
-  
-  # Mensaje de confirmación
-  message(paste0("Análisis completado. Los resultados se guardaron como: ", new_data_name, " y ", info_list_name))
+  # Mensaje
+  message(
+    paste0(
+      "Análisis completado. Los resultados se guardaron como: ",
+      new_data_name, " y ", info_list_name
+    )
+  )
+
+  invisible(new_data_name)
 }

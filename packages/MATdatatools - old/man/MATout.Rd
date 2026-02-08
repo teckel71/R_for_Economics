@@ -17,7 +17,7 @@ La función crea dos objetos en el entorno global:
 \item Un nuevo dataframe que contiene los datos sin outliers, nombrado como \code{<nombre_original>_so}.
 \item Una lista de información nombrada como \code{<nombre_original>_so_info}, que incluye:
 \itemize{
-\item \code{Outliers_Table}: Una tabla en formato HTML con los outliers detectados (o un texto si no hay).
+\item \code{Outliers_Table}: Una tabla en formato HTML con los outliers detectados.
 \item \code{Boxplot}: Un gráfico de caja de la variable analizada.
 }
 }
@@ -28,9 +28,11 @@ Devuelve un dataframe sin los outliers y genera un gráfico de caja y una tabla 
 }
 \examples{
 \dontrun{
+# Crear un dataframe de ejemplo
 datos <- data.frame(altura = c(160, 165, 170, 200, 180, 175, 400))
+
+# Detectar outliers en la variable altura
 MATout(datos, altura)
-# Resultados: datos_so y datos_so_info en el entorno global
 }
 
 }
