@@ -38,7 +38,7 @@ MATdescribe <- function(data, variable, bins = 0) {
   }
 
   if (bins == 0) {
-    # Freedman-Diaconis (si x tiene NA, grDevices::nclass.FD los ignora mal, así que limpiamos)
+    # Freedman-Diaconis (si x tiene NA, limpiamos)
     x_no_na <- x[!is.na(x)]
     if (length(x_no_na) < 2) {
       bins <- 1
@@ -52,7 +52,7 @@ MATdescribe <- function(data, variable, bins = 0) {
   mu <- mean(x, na.rm = TRUE)
   sig <- stats::sd(x, na.rm = TRUE)
 
-  # Histogram
+  # Histograma
   g1 <- ggplot2::ggplot(data = data, ggplot2::aes(x = .data[[variable]])) +
     ggplot2::geom_histogram(bins = bins, colour = "red", fill = "orange", alpha = 0.7) +
     ggplot2::geom_vline(xintercept = mu, color = "darkblue", linewidth = 1.2, alpha = 0.8) +
@@ -88,21 +88,20 @@ MATdescribe <- function(data, variable, bins = 0) {
     ggplot2::ggtitle("Box-Plot") +
     ggplot2::ylab(variable)
 
-  # QQ-Plot (con NA se maneja ok)
+  # QQ-Plot
   g4 <- ggplot2::ggplot(data = data, ggplot2::aes(sample = .data[[variable]])) +
     ggplot2::stat_qq(colour = "red") +
     ggplot2::stat_qq_line(colour = "darkblue") +
     ggplot2::ggtitle("QQ-Plot")
 
-  # Resumen de gráficos con patchwork
-  resumen_graficos <- (g1 | g2) / (g3 | g4) +
+  # Resumen de gráficos con patchwork (robusto, sin operadores | y /)
+  resumen_graficos <- patchwork::wrap_plots(g1, g2, g3, g4, ncol = 2) +
     patchwork::plot_annotation(
       title = paste("Análisis gráfico de", variable),
       subtitle = "Construido con MATdatatools"
     )
 
   # Estadísticos descriptivos
-  # (mantenemos tu estructura y etiquetas)
   estadisticos <- dplyr::summarise(
     data,
     Media = mean(.data[[variable]], na.rm = TRUE),
@@ -129,14 +128,13 @@ MATdescribe <- function(data, variable, bins = 0) {
   ) |>
     kableExtra::kable_styling(full_width = FALSE, position = "center")
 
-  # Pruebas de normalidad (robustas ante NA y tamaños pequeños)
+  # Pruebas de normalidad (robustas ante NA y tamaños grandes)
   x_test <- x[!is.na(x)]
 
   # Shapiro: requiere 3..5000
   shapiro_p <- NA_real_
   if (length(x_test) >= 3) {
     if (length(x_test) > 5000) {
-      # Shapiro no admite >5000: muestreamos 5000
       set.seed(123)
       x_sh <- sample(x_test, 5000)
     } else {
@@ -145,7 +143,6 @@ MATdescribe <- function(data, variable, bins = 0) {
     shapiro_p <- stats::shapiro.test(x_sh)$p.value
   }
 
-  # Lilliefors y Anderson-Darling (nortest) aceptan tamaños más grandes
   ks_p <- NA_real_
   ad_p <- NA_real_
   if (length(x_test) >= 3) {
@@ -162,8 +159,6 @@ MATdescribe <- function(data, variable, bins = 0) {
       "NO-NORMALIDAD"
     )
   )
-
-  # Si p-valor es NA, ponemos conclusión NA (para no engañar)
   normalidad$Conclusión[is.na(normalidad$`p-valor`)] <- NA
 
   tabla_normalidad <- knitr::kable(
@@ -173,14 +168,12 @@ MATdescribe <- function(data, variable, bins = 0) {
   ) |>
     kableExtra::kable_styling(full_width = FALSE, position = "center")
 
-  # Lista de resultados
   resultados <- list(
     grafico_resumen = resumen_graficos,
     estadisticos = tabla_estadisticos,
     normalidad = tabla_normalidad
   )
 
-  # Guardar en el entorno global
   nombre_lista <- paste0(variable, "_describe_info")
   assign(nombre_lista, resultados, envir = .GlobalEnv)
 
