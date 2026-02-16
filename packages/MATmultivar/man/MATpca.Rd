@@ -2,19 +2,19 @@
 % Please edit documentation in R/MATpca.R
 \name{MATpca}
 \alias{MATpca}
-\title{MATpca: Análisis de Componentes Principales}
+\title{MATpca: Analisis de Componentes Principales}
 \usage{
 MATpca(data, ...)
 }
 \arguments{
 \item{data}{Dataframe con los datos.}
 
-\item{...}{Variables específicas (sin comillas) a incluir en el análisis.}
+\item{...}{Variables especificas (sin comillas) a incluir en el analisis.}
 }
 \value{
-Lista con tablas de resumen y gráficos.
+Lista con el objeto PCA (prcomp) y una lista 'info' con tablas (kable) y graficos.
 }
 \description{
-Realiza un Análisis de Componentes Principales (PCA) sobre variables métricas.
-Devuelve tablas de resumen y gráficos de autovalores y varianza acumulada.
+Realiza un Analisis de Componentes Principales (PCA) sobre variables metricas.
+Devuelve tablas de resumen y graficos de autovalores y varianza acumulada.
 }

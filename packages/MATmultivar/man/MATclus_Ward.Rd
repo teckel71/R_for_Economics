@@ -2,22 +2,23 @@
 % Please edit documentation in R/MATclus_Ward.R
 \name{MATclus_Ward}
 \alias{MATclus_Ward}
-\title{MATclus_Ward: Clustering jerárquico con método de Ward}
+\title{MATclus_Ward: Clustering jerarquico con metodo de Ward}
 \usage{
 MATclus_Ward(data, ..., k = 0, silueta = FALSE)
 }
 \arguments{
 \item{data}{Dataframe con los datos.}
 
-\item{...}{Variables específicas (sin comillas) a incluir en el clustering.}
+\item{...}{Variables especificas (sin comillas) a incluir en el clustering.}
 
-\item{k}{Número de clusters a formar.}
+\item{k}{Numero de clusters a formar. Si k = 0 no se asignan grupos (solo dendrograma).}
 
-\item{silueta}{Booleano, si TRUE, calcula el número óptimo de clusters.}
+\item{silueta}{Booleano; si TRUE, calcula una sugerencia de k mediante silueta.}
 }
 \value{
-Lista con dendrograma, resumen de grupos y gráficos.
+Lista con resultados (distancias, hclust, dendrograma, y opcionalmente tablas y graficos por grupo).
 }
 \description{
-Realiza un análisis de clúster jerárquico usando el método de Ward y permite determinar el número óptimo de grupos.
+Realiza un analisis de cluster jerarquico usando el metodo de Ward y, opcionalmente,
+sugiere el numero de grupos con silueta.
 }

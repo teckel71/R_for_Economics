@@ -1,12 +1,24 @@
 Package: MATmultivar
 Type: Package
 Title: Herramientas para Análisis Multivariante
-Version: 0.1.0
-Author: Tu Nombre
-Maintainer: Miguel Ángel Tarancón <miguelangel.tarancon@uclm.es>
-Description: Este paquete proporciona funciones para el análisis multivariante, incluyendo análisis de componentes principales, clustering jerárquico y matrices de correlación.
+Version: 0.1.1
+Authors@R: 
+    person(given = "Miguel Ángel",
+           family = "Tarancón",
+           role = c("aut", "cre"),
+           email = "miguelangel.tarancon@uclm.es")
+Description: Funciones para análisis multivariante en R, incluyendo análisis de componentes
+    principales (PCA), clúster jerárquico (método de Ward) y matrices de correlación.
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
-Imports: GGally, dplyr, ggplot2, patchwork, knitr, kableExtra, rlang, factoextra, cluster
-RoxygenNote: 7.3.2
+Depends: R (>= 4.1.0)
+Imports: 
+    GGally,
+    dplyr,
+    factoextra,
+    ggplot2,
+    kableExtra,
+    knitr,
+    patchwork,
+    rlang
+RoxygenNote: 7.3.3

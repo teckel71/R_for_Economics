@@ -1,158 +1,168 @@
 # Archivo: R/MATclus_Ward.R
 
-#' MATclus_Ward: Clustering jerárquico con método de Ward
+#' MATclus_Ward: Clustering jerarquico con metodo de Ward
 #'
-#' Realiza un análisis de clúster jerárquico usando el método de Ward y permite determinar el número óptimo de grupos.
+#' Realiza un analisis de cluster jerarquico usando el metodo de Ward y, opcionalmente,
+#' sugiere el numero de grupos con silueta.
 #'
 #' @param data Dataframe con los datos.
-#' @param ... Variables específicas (sin comillas) a incluir en el clustering.
-#' @param k Número de clusters a formar.
-#' @param silueta Booleano, si TRUE, calcula el número óptimo de clusters.
-#' @return Lista con dendrograma, resumen de grupos y gráficos.
-#' @import factoextra ggplot2 dplyr cluster knitr kableExtra patchwork
+#' @param ... Variables especificas (sin comillas) a incluir en el clustering.
+#' @param k Numero de clusters a formar. Si k = 0 no se asignan grupos (solo dendrograma).
+#' @param silueta Booleano; si TRUE, calcula una sugerencia de k mediante silueta.
+#' @return Lista con resultados (distancias, hclust, dendrograma, y opcionalmente tablas y graficos por grupo).
 #' @export
 MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
-  library(factoextra)
-  library(ggplot2)
-  library(dplyr)
-  library(cluster)
-  library(knitr)
-  library(kableExtra)
-  library(patchwork)
-  
-  # Seleccionar variables métricas
+  pkgs <- c("factoextra", "ggplot2", "dplyr", "cluster", "knitr", "kableExtra", "patchwork", "rlang")
+  for (p in pkgs) {
+    if (!requireNamespace(p, quietly = TRUE)) {
+      stop(sprintf("Falta el paquete '%s'. Inst\u00e1lalo con install.packages('%s').", p, p), call. = FALSE)
+    }
+  }
+
+  # Seleccionar variables
   vars <- rlang::quos(...)
-  if (length(vars) == 0) {
-    data_selected <- data %>% select(where(is.numeric))
+  data_selected <- if (length(vars) == 0) {
+    dplyr::select(data, dplyr::where(is.numeric))
   } else {
-    data_selected <- data %>% select(!!!vars)
+    dplyr::select(data, !!!vars)
   }
-  
-  # Tipificar las variables
+
+  if (ncol(data_selected) < 2) {
+    stop("Se necesitan al menos dos variables num\u00e9ricas para el clustering.", call. = FALSE)
+  }
+
+  # Tipificar y distancias
   data_scaled <- scale(data_selected)
-  
-  # Calcular la matriz de distancias euclídeas
-  dist_matrix <- dist(data_scaled, method = "euclidean")
-  
-  # Crear lista para almacenar resultados
-  cluster_Ward_info <- list()
-  
-  # Visualizar la matriz de distancias con gráfico de temperatura
-  cluster_Ward_info$heatmap <- fviz_dist(dist_matrix)
-  
-  # Aplicar el método de clustering jerárquico de Ward
-  hclust_result <- hclust(dist_matrix, method = "ward.D2")
-  cluster_Ward_info$hclust <- hclust_result
-  
-  # Determinar el número óptimo de clusters con el método de la silueta si es necesario
-  if (silueta) {
-    sil_result <- fviz_nbclust(data_scaled, FUN = hcut, method = "silhouette")
-    sil_result <- sil_result + geom_vline(xintercept = which.max(sil_result$data$y), linetype = "dashed", color = "red")
-    cluster_Ward_info$silhouette <- sil_result
-  }
-  
-  # Función para crear composiciones de gráficos con patchwork
-  create_patchwork <- function(plot_list) {
-    n <- length(plot_list)
-    if (n == 0) return(NULL)
-    full_rows <- n %/% 4
-    remaining <- n %% 4
-    patchworks <- list()
-    
-    if (full_rows > 0) {
-      for (i in seq(1, full_rows * 4, by = 4)) {
-        patchworks <- c(patchworks, list((plot_list[[i]] + plot_list[[i+1]]) / 
-                                           (plot_list[[i+2]] + plot_list[[i+3]])))
-      }
+  dist_matrix <- stats::dist(data_scaled, method = "euclidean")
+
+  out <- list()
+  # En las pr\u00e1cticas se documenta como salida principal: heatmap, hclust, dendrogram y (opcionalmente) silhouette.
+  out$heatmap <- factoextra::fviz_dist(dist_matrix)
+
+  hclust_result <- stats::hclust(dist_matrix, method = "ward.D2")
+  out$hclust <- hclust_result
+
+  if (isTRUE(silueta)) {
+    sil_result <- factoextra::fviz_nbclust(data_scaled, FUNcluster = factoextra::hcut, method = "silhouette")
+    # l\u00ednea en el m\u00e1ximo (si existe la columna y)
+    if (!is.null(sil_result$data$y)) {
+      sil_result <- sil_result + ggplot2::geom_vline(
+        xintercept = which.max(sil_result$data$y),
+        linetype = "dashed",
+        colour = "red"
+      )
     }
-    
-    if (remaining > 0) {
-      last_plots <- plot_list[(full_rows * 4 + 1):n]
-      empty_plots <- lapply(1:(4 - remaining), function(x) ggplot() + theme_void())
-      last_patchwork <- do.call(patchwork::wrap_plots, c(last_plots, empty_plots))
-      patchworks <- c(patchworks, list(last_patchwork))
-    }
-    return(patchworks)
+    out$silhouette <- sil_result
   }
-  
-  # Visualizar dendrograma dependiendo del valor de k
+
+  # Dendrograma (con o sin k)
   if (k == 0) {
-    cluster_Ward_info$dendrogram <- fviz_dend(hclust_result, cex = 0.6, rect = FALSE, 
-                                              labels_track_height = 5.5, 
-                                              theme = theme_gray())
-  } else {
-    cluster_Ward_info$dendrogram <- fviz_dend(hclust_result, cex = 0.6, k = k, 
-                                              k_colors = "black", labels_track_height = 5.5, 
-                                              rect = TRUE, rect_border = "npg", rect_fill = TRUE, 
-                                              theme = theme_gray())
-    
-    # Asignar cada observación a un grupo
-    group_assignments <- cutree(hclust_result, k = k)
-    
-    # Crear dataframe con los datos originales más el grupo asignado
-    data_with_groups <- data %>% 
-      select(names(data_selected)) %>% 
-      mutate(NOMBRE = rownames(data), GRUPO = factor(paste("GRUPO", group_assignments)))
-    
-    cluster_Ward_info$data_groups <- data_with_groups
-    
-    # Crear tabla resumen de los grupos con medias
-    summary_table <- data_with_groups %>% 
-      group_by(GRUPO) %>% 
-      summarise(Obs = n(), across(where(is.numeric), ~ round(mean(.), 3)))
-    
-    cluster_Ward_info$group_summary <- kable(summary_table, format = "html", 
-                                             caption = "GRUPOS Y CENTROIDES") %>% 
-      kable_styling(full_width = FALSE, bootstrap_options = c("striped", "bordered", "condensed"), 
-                    position = "center", font_size = 11)
-    
-    # Crear tablas individuales por grupo
-    group_tables <- list()
-    for (grupo in unique(data_with_groups$GRUPO)) {
-      group_data <- data_with_groups %>% filter(GRUPO == grupo) %>% select(-GRUPO, -NOMBRE) %>% 
-        mutate(across(where(is.numeric), ~ round(., 3)))
-      group_tables[[as.character(grupo)]] <- kable(group_data, format = "html", 
-                                                   caption = paste("Casos en", grupo)) %>% 
-        kable_styling(full_width = FALSE, bootstrap_options = c("striped", "bordered", "condensed"), 
-                      position = "center", font_size = 11)
-    }
-    cluster_Ward_info$group_tables <- group_tables
-    
-    # Crear gráficos de barras comparativos de medias
-    bar_plots <- list()
-    variables <- colnames(data_selected)
-    for (var in variables) {
-      grafico <- ggplot(summary_table, aes_string(x = "GRUPO", y = var)) +
-        geom_bar(stat = "identity", colour = "red", fill = "orange", alpha = 0.7) +
-        ggtitle(paste0(var, ". Media por grupos."), subtitle = "Análisis de Clúster") +
-        xlab("Grupo") +
-        ylab(var)
-      bar_plots[[paste0("barplot_", var)]] <- grafico
-    }
-    
-    cluster_Ward_info$bar_plots <- bar_plots
-    cluster_Ward_info$bar_patchworks <- create_patchwork(bar_plots)
-    
-    # Crear gráficos de dispersión con los centros de cada grupo
-    scatter_plots <- list()
-    variable_combinations <- combn(colnames(data_selected), 2, simplify = FALSE)
-    
-    for (comb in variable_combinations) {
-      var1 <- comb[1]
-      var2 <- comb[2]
-      scatter_plot <- ggplot(data_with_groups, aes_string(x = var1, y = var2, color = "GRUPO")) +
-        geom_point(alpha = 0.7) +
-        geom_point(data = summary_table, aes_string(x = var1, y = var2, color = "GRUPO"), size = 2, shape = 16) +
-        labs(title = paste("GRÁFICO", var1, "-", var2), subtitle = "Función: MATclus_Ward") +
-        xlab(var1) +
-        ylab(var2) +
-        scale_color_brewer(palette = "Set1")
-      scatter_plots[[paste0("scatter_", var1, "_", var2)]] <- scatter_plot
-    }
-    
-    cluster_Ward_info$scatter_plots <- scatter_plots
-    cluster_Ward_info$scatter_patchworks <- create_patchwork(scatter_plots)
+    out$dendrogram <- factoextra::fviz_dend(
+      hclust_result,
+      cex = 0.6,
+      rect = FALSE,
+      labels_track_height = 5.5,
+      ggtheme = ggplot2::theme_gray()
+    )
+    return(out)
   }
-  
-  return(cluster_Ward_info)
+
+  # Con k: asignaci\u00f3n de grupos + tablas y gr\u00e1ficos
+  out$dendrogram <- factoextra::fviz_dend(
+    hclust_result,
+    cex = 0.6,
+    k = k,
+    k_colors = "black",
+    labels_track_height = 5.5,
+    rect = TRUE,
+    rect_border = "black",
+    rect_fill = TRUE,
+    ggtheme = ggplot2::theme_gray()
+  )
+
+  group_assignments <- stats::cutree(hclust_result, k = k)
+
+  # data_groups: datos originales + asignaci\u00f3n de grupo (sin columnas auxiliares)
+  data_with_groups <- dplyr::mutate(
+    data_selected,
+    GRUPO = factor(paste("GRUPO", group_assignments))
+  )
+
+  out$data_groups <- data_with_groups
+
+  summary_table <- data_with_groups |>
+    dplyr::group_by(.data$GRUPO) |>
+    dplyr::summarise(
+      Obs = dplyr::n(),
+      dplyr::across(dplyr::where(is.numeric), ~ round(mean(.x, na.rm = TRUE), 3)),
+      .groups = "drop"
+    )
+
+  out$group_summary <- knitr::kable(summary_table, format = "html", caption = "GRUPOS Y CENTROIDES") |>
+    kableExtra::kable_styling(
+      full_width = FALSE,
+      bootstrap_options = c("striped", "bordered", "condensed"),
+      position = "center",
+      font_size = 11
+    )
+
+  # Tablas por grupo
+  group_tables <- list()
+  for (grupo in unique(data_with_groups$GRUPO)) {
+    # Identificador de caso: si hay rownames las usamos (p.ej. nombres de empresas);
+    # si no, usamos un \u00edndice.
+    group_df <- data_with_groups |>
+      dplyr::filter(.data$GRUPO == grupo)
+    rn <- rownames(group_df)
+    group_df$.case_id <- if (is.null(rn)) as.character(seq_len(nrow(group_df))) else rn
+    group_data <- group_df |>
+      dplyr::select(.data$.case_id, dplyr::everything(), - .data$GRUPO) |>
+      dplyr::mutate(dplyr::across(dplyr::where(is.numeric), ~ round(.x, 3)))
+
+    group_tables[[as.character(grupo)]] <- knitr::kable(group_data, format = "html", caption = paste("Casos en", grupo)) |>
+      kableExtra::kable_styling(
+        full_width = FALSE,
+        bootstrap_options = c("striped", "bordered", "condensed"),
+        position = "center",
+        font_size = 11
+      )
+  }
+  out$group_tables <- group_tables
+
+  # Gr\u00e1ficos de barras de medias
+  bar_plots <- list()
+  variables <- colnames(data_selected)
+  for (var in variables) {
+    grafico <- ggplot2::ggplot(summary_table, ggplot2::aes(x = GRUPO, y = .data[[var]])) +
+      ggplot2::geom_bar(stat = "identity", colour = "red", fill = "orange", alpha = 0.7) +
+      ggplot2::ggtitle(paste0(var, ". Media por grupos."), subtitle = "An\u00e1lisis de Cl\u00faster") +
+      ggplot2::xlab("Grupo") +
+      ggplot2::ylab(var)
+    bar_plots[[paste0("barplot_", var)]] <- grafico
+  }
+  # (Las pr\u00e1cticas solo exponen bar_patchworks; evitamos a\u00f1adir elementos extra que puedan confundir.)
+
+  # Dispersi\u00f3n por pares
+  scatter_plots <- list()
+  variable_combinations <- utils::combn(colnames(data_selected), 2, simplify = FALSE)
+
+  for (comb in variable_combinations) {
+    var1 <- comb[1]
+    var2 <- comb[2]
+    scatter_plot <- ggplot2::ggplot(data_with_groups, ggplot2::aes(x = .data[[var1]], y = .data[[var2]], color = GRUPO)) +
+      ggplot2::geom_point(alpha = 0.7) +
+      ggplot2::geom_point(data = summary_table, ggplot2::aes(x = .data[[var1]], y = .data[[var2]], color = GRUPO), size = 2, shape = 16) +
+      ggplot2::labs(title = paste("GR\u00c1FICO", var1, "-", var2), subtitle = "Funci\u00f3n: MATclus_Ward") +
+      ggplot2::xlab(var1) +
+      ggplot2::ylab(var2) +
+      ggplot2::scale_color_brewer(palette = "Set1")
+    scatter_plots[[paste0("scatter_", var1, "_", var2)]] <- scatter_plot
+  }
+  # (Las pr\u00e1cticas solo exponen scatter_patchworks.)
+
+  # Composiciones (sin usar operadores patchwork)
+  out$bar_patchworks <- patchwork::wrap_plots(bar_plots, ncol = 2)
+  out$scatter_patchworks <- patchwork::wrap_plots(scatter_plots, ncol = 2)
+
+  out
 }

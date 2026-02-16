@@ -2,21 +2,23 @@
 % Please edit documentation in R/MATpcascores.R
 \name{MATpcascores}
 \alias{MATpcascores}
-\title{MATpcascores: Obtención de puntuaciones de componentes principales}
+\title{MATpcascores: Obtencion de puntuaciones de componentes principales}
 \usage{
 MATpcascores(data, pca_object, Nscores = NULL, Rank = 10)
 }
 \arguments{
 \item{data}{Dataframe de entrada (puede ser diferente al original).}
 
-\item{pca_object}{Objeto resultante de prcomp().}
+\item{pca_object}{Objeto resultante de stats::prcomp().}
 
-\item{Nscores}{Número de componentes principales a extraer (por defecto todas).}
+\item{Nscores}{Numero de componentes principales a extraer (por defecto todas).}
 
-\item{Rank}{Número de casos a mostrar en tablas y gráficos (por defecto 10).}
+\item{Rank}{Numero de casos a mostrar en tablas y graficos (por defecto 10).}
 }
 \value{
-Lista con el dataframe de puntuaciones, tabla formateada y gráfico.
+Lista con el dataframe de puntuaciones y, para cada componente, una tabla (kable) y un grafico.
+Ademas, por compatibilidad con las practicas del curso, guarda esta lista en el entorno global con un nombre
+del tipo: scores_<data>_<pca>_info.
 }
 \description{
 Calcula y devuelve puntuaciones de componentes principales de un PCA previamente realizado.

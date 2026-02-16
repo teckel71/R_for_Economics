@@ -2,19 +2,19 @@
 % Please edit documentation in R/MATcor.R
 \name{MATcor}
 \alias{MATcor}
-\title{MATcor: Matriz de correlación gráfica}
+\title{MATcor: Matriz de correlacion grafica}
 \usage{
 MATcor(data, ...)
 }
 \arguments{
 \item{data}{Dataframe con los datos.}
 
-\item{...}{Variables específicas (sin comillas) a incluir en la matriz de correlación.}
+\item{...}{Variables especificas (sin comillas) a incluir en la matriz de correlacion.}
 }
 \value{
-Un gráfico de correlación guardado en el entorno global.
+Devuelve (y ademas guarda en el entorno global) una lista con el grafico de correlaciones.
 }
 \description{
-Esta función crea una matriz de correlación gráfica entre las variables métricas de un dataframe.
-Permite seleccionar un subconjunto específico de variables.
+Esta funcion crea una matriz de correlacion grafica entre variables metricas de un dataframe.
+Permite seleccionar un subconjunto especifico de variables.
 }

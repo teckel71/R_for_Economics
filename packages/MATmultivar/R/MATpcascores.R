@@ -1,77 +1,98 @@
-#' MATpcascores: Obtención de puntuaciones de componentes principales
+#' MATpcascores: Obtencion de puntuaciones de componentes principales
 #'
 #' Calcula y devuelve puntuaciones de componentes principales de un PCA previamente realizado.
 #'
 #' @param data Dataframe de entrada (puede ser diferente al original).
-#' @param pca_object Objeto resultante de prcomp().
-#' @param Nscores Número de componentes principales a extraer (por defecto todas).
-#' @param Rank Número de casos a mostrar en tablas y gráficos (por defecto 10).
-#' @return Lista con el dataframe de puntuaciones, tabla formateada y gráfico.
-#' @import dplyr ggplot2 knitr kableExtra
+#' @param pca_object Objeto resultante de stats::prcomp().
+#' @param Nscores Numero de componentes principales a extraer (por defecto todas).
+#' @param Rank Numero de casos a mostrar en tablas y graficos (por defecto 10).
+#' @return Lista con el dataframe de puntuaciones y, para cada componente, una tabla (kable) y un grafico.
+#' Ademas, por compatibilidad con las practicas del curso, guarda esta lista en el entorno global con un nombre
+#' del tipo: scores_<data>_<pca>_info.
 #' @export
 MATpcascores <- function(data, pca_object, Nscores = NULL, Rank = 10) {
-  if (!"prcomp" %in% class(pca_object)) stop("El objeto PCA no es válido.")
-  
-  # Extraer nombres de variables usadas en el PCA
+  pkgs <- c("dplyr", "ggplot2", "knitr", "kableExtra")
+  for (p in pkgs) {
+    if (!requireNamespace(p, quietly = TRUE)) {
+      stop(sprintf("Falta el paquete '%s'. Inst\u00e1lalo con install.packages('%s').", p, p), call. = FALSE)
+    }
+  }
+
+  if (!inherits(pca_object, "prcomp")) {
+    stop("El objeto PCA no es v\u00e1lido (debe ser de clase 'prcomp').", call. = FALSE)
+  }
+
   pca_vars <- rownames(pca_object$rotation)
-  
-  # Verificar que las variables estén en el nuevo dataframe
+
   missing_vars <- setdiff(pca_vars, colnames(data))
   if (length(missing_vars) > 0) {
-    stop(paste("Faltan variables en el nuevo dataframe:", paste(missing_vars, collapse = ", ")))
+    stop(paste("Faltan variables en el nuevo dataframe:", paste(missing_vars, collapse = ", ")), call. = FALSE)
   }
-  
-  # Calcular puntuaciones de los nuevos casos
-  scores <- predict(pca_object, newdata = data[pca_vars])
-  
-  # Definir número de componentes a extraer
+
+  scores <- stats::predict(pca_object, newdata = data[pca_vars])
+
   if (is.null(Nscores)) {
-    Nscores <- ncol(scores)  # Usar todas las componentes disponibles
+    Nscores <- ncol(scores)
   } else {
-    Nscores <- min(Nscores, ncol(scores))  # Asegurar que no exceda el máximo
+    Nscores <- min(Nscores, ncol(scores))
   }
-  
-  scores <- as.data.frame(scores[, 1:Nscores, drop = FALSE])
+
+  scores <- as.data.frame(scores[, seq_len(Nscores), drop = FALSE])
   data_with_scores <- cbind(data, scores)
-  
-  # Manejo de casos con valores faltantes en las puntuaciones
+
   na_cases <- sum(apply(scores, 1, function(x) any(is.na(x))))
   if (na_cases > 0) {
-    message(paste("No se pudieron calcular las puntuaciones para", na_cases, "casos."))
+    message("No se pudieron calcular las puntuaciones para ", na_cases, " casos.")
   }
-  
-  # Generar nombre de la lista de salida
-  data_name <- deparse(substitute(data))
-  pca_name <- deparse(substitute(pca_object))
-  pca_name <- sub("\\$.*", "", pca_name)  # Eliminar cualquier signo de dólar
-  output_name <- paste0("scores_", data_name, "_", pca_name, "_info")
-  
-  # Generar tablas y gráficos para cada componente
+
   resultados <- list()
-  
-  for (i in 1:Nscores) {
+
+  for (i in seq_len(Nscores)) {
     comp_name <- colnames(scores)[i]
-    sorted_data <- data_with_scores %>% arrange(desc(.data[[comp_name]])) %>% slice(1:Rank)
-    
-    # Tabla con kable
-    tabla <- sorted_data %>%
-      select(all_of(c(comp_name, pca_vars))) %>%
-      kable(caption = paste("Top", Rank, "casos para", comp_name), format.args = list(decimal.mark = ".", digits = 4)) %>%
-      kable_styling(full_width = FALSE, bootstrap_options = c("striped", "bordered"))
-    
-    # Gráfico de barras
-    grafico <- ggplot(sorted_data, aes(x = reorder(rownames(sorted_data), .data[[comp_name]]), y = .data[[comp_name]])) +
-      geom_bar(stat = "identity", color = "red", fill = "orange", alpha = 0.6) +
-      geom_text(aes(label = sprintf("%.3f", .data[[comp_name]])), hjust = 1.2, size = 3, color = "black") +
-      coord_flip() +
-      labs(title = paste("Top", Rank, "casos en", comp_name), x = "Casos", y = paste("Valor en", comp_name)) +
-      theme_minimal()
-    
+    sorted_data <- dplyr::arrange(data_with_scores, dplyr::desc(.data[[comp_name]]))
+    sorted_data <- dplyr::slice(sorted_data, seq_len(min(Rank, nrow(sorted_data))))
+
+    case_id <- rownames(sorted_data)
+    if (is.null(case_id)) case_id <- as.character(seq_len(nrow(sorted_data)))
+    sorted_data$.case_id <- case_id
+
+    # En las pr\u00e1cticas se trabaja con tablas HTML (kable + kableExtra).
+    tabla <- sorted_data |>
+      dplyr::select(dplyr::all_of(c(".case_id", comp_name, pca_vars))) |>
+      knitr::kable(
+        caption = paste("Top", min(Rank, nrow(sorted_data)), "casos para", comp_name),
+        format = "html",
+        format.args = list(decimal.mark = ".", digits = 4)
+      ) |>
+      kableExtra::kable_styling(
+        full_width = FALSE,
+        bootstrap_options = c("striped", "bordered", "condensed"),
+        position = "center",
+        font_size = 11
+      )
+
+    grafico <- ggplot2::ggplot(
+      sorted_data,
+      ggplot2::aes(x = stats::reorder(.case_id, .data[[comp_name]]), y = .data[[comp_name]])
+    ) +
+      ggplot2::geom_bar(stat = "identity", color = "red", fill = "orange", alpha = 0.6) +
+      ggplot2::geom_text(ggplot2::aes(label = sprintf("%.3f", .data[[comp_name]])), hjust = 1.2, size = 3, color = "black") +
+      ggplot2::coord_flip() +
+      ggplot2::labs(title = paste("Top", min(Rank, nrow(sorted_data)), "casos en", comp_name), x = "Casos", y = paste("Valor en", comp_name)) +
+      ggplot2::theme_minimal()
+
     resultados[[comp_name]] <- list(tabla = tabla, grafico = grafico)
   }
-  
-  output_list <- list(scores_df = data_with_scores, resultados = resultados)
-  
-  assign(output_name, output_list, envir = .GlobalEnv)
-  return(output_list)
+
+  out <- list(scores_df = data_with_scores, resultados = resultados)
+
+  # --- Compatibilidad con gu\u00eda/pr\u00e1cticas ---
+  # En los materiales docentes, la llamada MATpcascores(seleccion_sm_so, componentes$pca, ...)
+  # crea un objeto llamado: scores_seleccion_sm_so_componentes_info
+  df_name <- deparse(substitute(data))
+  pca_expr <- deparse(substitute(pca_object))
+  pca_base <- sub("\\$.*", "", pca_expr)
+  assign(paste0("scores_", df_name, "_", pca_base, "_info"), out, envir = .GlobalEnv)
+
+  out
 }
