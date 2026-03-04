@@ -18,6 +18,14 @@ MATclus_Ward(data, ..., k = 0, silueta = FALSE)
 \value{
 Lista con resultados (distancias, hclust, dendrograma, y opcionalmente tablas y graficos por grupo).
 }
+\details{
+En la representacion del dendrograma se aplican ajustes esteticos para facilitar la lectura
+y replicar la salida de la practica de referencia: grosor de ramas (\code{lwd = 0.7}), hojas
+alineadas (\code{hang = -1}), coloreado por clúster (paleta \code{"Set1"}) cuando \code{k > 0},
+rectangulos de clúster con relleno y transparencia (\code{rect_fill = TRUE}, \code{rect_alpha = 0.25}),
+y ocultacion de la leyenda.
+}
+
 \description{
 Realiza un analisis de cluster jerarquico usando el metodo de Ward y, opcionalmente,
 sugiere el numero de grupos con silueta.

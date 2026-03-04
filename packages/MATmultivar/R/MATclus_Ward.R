@@ -5,6 +5,13 @@
 #' Realiza un analisis de cluster jerarquico usando el metodo de Ward y, opcionalmente,
 #' sugiere el numero de grupos con silueta.
 #'
+#' @details
+#' En la representacion del dendrograma se aplican ajustes esteticos para facilitar la lectura
+#' y replicar la salida de la practica de referencia: grosor de ramas (`lwd = 0.7`), hojas
+#' alineadas (`hang = -1`), coloreado por clúster (paleta `"Set1"`) cuando `k > 0`,
+#' rectangulos de clúster con relleno y transparencia (`rect_fill = TRUE`, `rect_alpha = 0.25`),
+#' y ocultacion de la leyenda.
+#'
 #' @param data Dataframe con los datos.
 #' @param ... Variables especificas (sin comillas) a incluir en el clustering.
 #' @param k Numero de clusters a formar. Si k = 0 no se asignan grupos (solo dendrograma).
@@ -61,9 +68,12 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
       hclust_result,
       cex = 0.6,
       rect = FALSE,
+      lwd = 0.7,
+      hang = -1,
       labels_track_height = 5.5,
       ggtheme = ggplot2::theme_gray()
-    )
+    ) +
+      ggplot2::theme(legend.position = "none")
     return(out)
   }
 
@@ -72,14 +82,18 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
     hclust_result,
     cex = 0.6,
     k = k,
-    k_colors = "black",
-    labels_track_height = 5.5,
+    k_colors = "Set1",
+    color_labels_by_k = FALSE,
     rect = TRUE,
-    rect_border = "black",
     rect_fill = TRUE,
+    rect_border = "Set1",
+    rect_alpha = 0.25,
+    lwd = 0.7,
+    hang = -1,
+    labels_track_height = 5.5,
     ggtheme = ggplot2::theme_gray()
-  )
-
+  ) +
+    ggplot2::theme(legend.position = "none")
   group_assignments <- stats::cutree(hclust_result, k = k)
 
   # data_groups: datos originales + asignaci\u00f3n de grupo (sin columnas auxiliares)
