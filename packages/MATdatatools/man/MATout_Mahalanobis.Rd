@@ -9,7 +9,8 @@ MATout_Mahalanobis(data, ...)
 \arguments{
 \item{data}{Dataframe que contiene los datos a analizar.}
 
-\item{...}{Variables a incluir en el análisis (sin comillas, separadas por comas).}
+\item{...}{Variables a incluir en el análisis (sin comillas, separadas por comas). Opcional.
+Si no se indican variables, por defecto se utilizan todas las columnas numéricas del dataframe.}
 }
 \value{
 La función crea dos objetos en el entorno global:
@@ -30,6 +31,10 @@ Genera un dataframe sin los outliers y proporciona un gráfico de caja y una tab
 \dontrun{
 datos <- data.frame(x = rnorm(100), y = rnorm(100))
 MATout_Mahalanobis(datos, x, y)
+# Resultados: datos_so y datos_so_info en el entorno global
+
+# Si no se indican variables, se usan todas las columnas numéricas:
+MATout_Mahalanobis(datos)
 # Resultados: datos_so y datos_so_info en el entorno global
 }
 

@@ -4,7 +4,8 @@
 #' Genera un dataframe sin los outliers y proporciona un gráfico de caja y una tabla con los casos detectados.
 #'
 #' @param data Dataframe que contiene los datos a analizar.
-#' @param ... Variables a incluir en el análisis (sin comillas, separadas por comas).
+#' @param ... Variables a incluir en el análisis (sin comillas, separadas por comas). Opcional.
+#'   Si no se indican variables, por defecto se utilizan todas las columnas numéricas del dataframe.
 #'
 #' @return
 #' La función crea dos objetos en el entorno global:
@@ -34,8 +35,13 @@ MATout_Mahalanobis <- function(data, ...) {
 
   # Capturar variables desde ...
   variables <- as.character(substitute(list(...)))[-1]
+
+  # Si no se especifican variables, usar por defecto todas las columnas numéricas
   if (length(variables) == 0) {
-    stop("Debes indicar al menos una variable, por ejemplo: MATout_Mahalanobis(df, x, y).")
+    variables <- names(data)[vapply(data, is.numeric, logical(1))]
+    if (length(variables) == 0) {
+      stop("El dataframe no contiene variables numéricas para calcular la distancia de Mahalanobis.")
+    }
   }
 
   original_name <- deparse(substitute(data))
