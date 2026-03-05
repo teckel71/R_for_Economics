@@ -1,7 +1,7 @@
 Package: MATmultivar
 Type: Package
 Title: Herramientas para Análisis Multivariante
-Version: 0.1.4
+Version: 0.1.5
 Authors@R: 
     person(given = "Miguel Ángel",
            family = "Tarancón",

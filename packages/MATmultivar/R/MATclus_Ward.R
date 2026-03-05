@@ -58,8 +58,11 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
     if (!inherits(p, "ggplot")) return(p)
     for (i in seq_along(p$layers)) {
       if (inherits(p$layers[[i]]$geom, "GeomSegment")) {
+        # ggplot2 >= 3.4 usa `linewidth` para segmentos; versiones antiguas usan `size`.
+        p$layers[[i]]$aes_params$linewidth <- size
         p$layers[[i]]$aes_params$size <- size
         p$layers[[i]]$aes_params$colour <- colour
+        p$layers[[i]]$aes_params$color <- colour
       }
     }
     p
@@ -156,7 +159,11 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
       dplyr::select(.data$.case_id, dplyr::everything(), - .data$GRUPO) |>
       dplyr::mutate(dplyr::across(dplyr::where(is.numeric), ~ round(.x, 3)))
 
-    group_tables[[as.character(grupo)]] <- knitr::kable(group_data, format = "html", caption = paste("Casos en", grupo)) |>
+
+    # Evitar que kable muestre también los rownames como una columna adicional
+    rownames(group_data) <- NULL
+
+    group_tables[[as.character(grupo)]] <- knitr::kable(group_data, format = "html", caption = paste("Casos en", grupo), row.names = FALSE) |>
       kableExtra::kable_styling(
         full_width = FALSE,
         bootstrap_options = c("striped", "bordered", "condensed"),

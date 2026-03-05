@@ -22,3 +22,7 @@
 
 ## Correcciones
 - `MATclus_Ward()`: primera aproximación de ajustes estéticos del dendrograma (lwd, hang, rectángulos, sin leyenda).
+
+
+# MATmultivar 0.1.5
+- MATclus_Ward(): forzar grosor real de ramas (linewidth) y mantener ramas negras; corregida duplicación de columna de casos en tablas por grupo.
