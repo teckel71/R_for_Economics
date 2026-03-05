@@ -20,10 +20,10 @@ Lista con resultados (distancias, hclust, dendrograma, y opcionalmente tablas y 
 }
 \details{
 En la representacion del dendrograma se aplican ajustes esteticos para facilitar la lectura
-y replicar la salida de la practica de referencia: ramas finas (\code{lwd = 0.25}), hojas
-alineadas (\code{hang = -1}), ramas siempre en negro (no se colorean por clúster),
-rectangulos de clúster con relleno, transparencia y bordes coloreados (paleta \code{"Set1"};
-\code{rect_fill = TRUE}, \code{rect_alpha = 0.25}), y ocultacion de la leyenda.
+y replicar la salida de la practica de referencia: grosor de ramas (\code{lwd = 0.7}), hojas
+alineadas (\code{hang = -1}), coloreado por clúster (paleta \code{"Set1"}) cuando \code{k > 0},
+rectangulos de clúster con relleno y transparencia (\code{rect_fill = TRUE}, \code{rect_alpha = 0.25}),
+y ocultacion de la leyenda.
 }
 
 \description{

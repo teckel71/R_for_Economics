@@ -7,10 +7,10 @@
 #'
 #' @details
 #' En la representacion del dendrograma se aplican ajustes esteticos para facilitar la lectura
-#' y replicar la salida de la practica de referencia: ramas finas (`lwd = 0.25`), hojas
-#' alineadas (`hang = -1`), ramas siempre en negro (no se colorean por clúster),
-#' rectangulos de clúster con relleno, transparencia y bordes coloreados (paleta `"Set1"`;
-#' `rect_fill = TRUE`, `rect_alpha = 0.25`), y ocultacion de la leyenda.
+#' y replicar la salida de la practica de referencia: grosor de ramas (`lwd = 0.7`), hojas
+#' alineadas (`hang = -1`), coloreado por clúster (paleta `"Set1"`) cuando `k > 0`,
+#' rectangulos de clúster con relleno y transparencia (`rect_fill = TRUE`, `rect_alpha = 0.25`),
+#' y ocultacion de la leyenda.
 #'
 #' @param data Dataframe con los datos.
 #' @param ... Variables especificas (sin comillas) a incluir en el clustering.
@@ -68,7 +68,7 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
       hclust_result,
       cex = 0.6,
       rect = FALSE,
-      lwd = 0.25,
+      lwd = 0.7,
       hang = -1,
       labels_track_height = 5.5,
       ggtheme = ggplot2::theme_gray()
@@ -82,14 +82,13 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
     hclust_result,
     cex = 0.6,
     k = k,
-    # Mantener ramas del dendrograma en negro (como en la guia)
-    k_colors = "black",
+    k_colors = "Set1",
     color_labels_by_k = FALSE,
     rect = TRUE,
     rect_fill = TRUE,
     rect_border = "Set1",
     rect_alpha = 0.25,
-    lwd = 0.25,
+    lwd = 0.7,
     hang = -1,
     labels_track_height = 5.5,
     ggtheme = ggplot2::theme_gray()
