@@ -7,10 +7,11 @@
 #'
 #' @details
 #' En la representacion del dendrograma se aplican ajustes esteticos para facilitar la lectura
-#' y replicar la salida de la practica de referencia: ramas finas (`lwd = 0.25`), hojas
-#' alineadas (`hang = -1`), ramas siempre en negro (no se colorean por clúster),
-#' rectangulos de clúster con relleno, transparencia y bordes coloreados (paleta `"Set1"`;
-#' `rect_fill = TRUE`, `rect_alpha = 0.25`), y ocultacion de la leyenda.
+#' y replicar la salida de la practica de referencia: ramas muy finas y negras (se fuerza el
+#' grosor de `geom_segment()` a `size = 0.2` para evitar diferencias entre versiones de
+#' {factoextra}), hojas alineadas (`hang = -1`), ramas siempre en negro (no se colorean por
+#' clúster), rectangulos de clúster con relleno, transparencia y bordes coloreados (paleta
+#' `"Set1"`; `rect_fill = TRUE`, `rect_alpha = 0.25`), y ocultacion de la leyenda.
 #'
 #' @param data Dataframe con los datos.
 #' @param ... Variables especificas (sin comillas) a incluir en el clustering.
@@ -49,6 +50,21 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
   hclust_result <- stats::hclust(dist_matrix, method = "ward.D2")
   out$hclust <- hclust_result
 
+  # Helper interno: forzar estilo del dendrograma generado por factoextra::fviz_dend()
+  # Nota: en varias versiones de factoextra, el argumento `lwd` no afecta (o afecta poco)
+  # al grosor real de las ramas, porque estas se dibujan con geom_segment().
+  # Por ello, ajustamos directamente las capas de ggplot.
+  .MAT_force_dendro_segments <- function(p, size = 0.2, colour = "black") {
+    if (!inherits(p, "ggplot")) return(p)
+    for (i in seq_along(p$layers)) {
+      if (inherits(p$layers[[i]]$geom, "GeomSegment")) {
+        p$layers[[i]]$aes_params$size <- size
+        p$layers[[i]]$aes_params$colour <- colour
+      }
+    }
+    p
+  }
+
   if (isTRUE(silueta)) {
     sil_result <- factoextra::fviz_nbclust(data_scaled, FUNcluster = factoextra::hcut, method = "silhouette")
     # l\u00ednea en el m\u00e1ximo (si existe la columna y)
@@ -74,6 +90,9 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
       ggtheme = ggplot2::theme_gray()
     ) +
       ggplot2::theme(legend.position = "none")
+
+    # Forzar ramas muy finas y negras (como en la guía)
+    out$dendrogram <- .MAT_force_dendro_segments(out$dendrogram, size = 0.2, colour = "black")
     return(out)
   }
 
@@ -95,6 +114,9 @@ MATclus_Ward <- function(data, ..., k = 0, silueta = FALSE) {
     ggtheme = ggplot2::theme_gray()
   ) +
     ggplot2::theme(legend.position = "none")
+
+  # Forzar ramas muy finas y negras (como en la guía)
+  out$dendrogram <- .MAT_force_dendro_segments(out$dendrogram, size = 0.2, colour = "black")
   group_assignments <- stats::cutree(hclust_result, k = k)
 
   # data_groups: datos originales + asignaci\u00f3n de grupo (sin columnas auxiliares)
